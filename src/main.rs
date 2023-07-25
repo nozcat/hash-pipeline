@@ -7,14 +7,10 @@ const N: usize = 1_000_000_000;
 fn main() {
     let start = Instant::now();
 
-    let (mut generator_to_sha512_tx, mut generator_to_sha512_rx) =
-        ringbuf::HeapRb::new(1_000_000).split();
-    let (mut generator_to_blake3_tx, mut generator_to_blake3_rx) =
-        ringbuf::HeapRb::new(1_000_000).split();
-    let (mut sha512_to_result_tx, mut sha512_to_result_rx) =
-        ringbuf::HeapRb::new(1_000_000).split();
-    let (mut blake3_to_result_tx, mut blake3_to_result_rx) =
-        ringbuf::HeapRb::new(1_000_000).split();
+    let (mut generator_to_sha512_tx, mut generator_to_sha512_rx) = rtrb::RingBuffer::new(1_000_000);
+    let (mut generator_to_blake3_tx, mut generator_to_blake3_rx) = rtrb::RingBuffer::new(1_000_000);
+    let (mut sha512_to_result_tx, mut sha512_to_result_rx) = rtrb::RingBuffer::new(1_000_000);
+    let (mut blake3_to_result_tx, mut blake3_to_result_rx) = rtrb::RingBuffer::new(1_000_000);
 
     // Generator
     thread::spawn(move || {
@@ -52,19 +48,19 @@ fn main() {
     println!("{:?}", start.elapsed());
 }
 
-fn push<T>(tx: &mut ringbuf::HeapProducer<T>, mut value: T) {
+fn push<T>(tx: &mut rtrb::Producer<T>, mut value: T) {
     loop {
         match tx.push(value) {
             Ok(_) => break,
-            Err(v) => value = v,
+            Err(rtrb::PushError::Full(v)) => value = v,
         }
         thread::sleep(Duration::from_millis(1));
     }
 }
 
-fn pop<T>(rx: &mut ringbuf::HeapConsumer<T>) -> T {
+fn pop<T>(rx: &mut rtrb::Consumer<T>) -> T {
     loop {
-        if let Some(value) = rx.pop() {
+        if let Ok(value) = rx.pop() {
             return value;
         }
         thread::sleep(Duration::from_millis(1));
