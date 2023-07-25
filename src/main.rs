@@ -1,6 +1,6 @@
 use sha2::{Digest, Sha512};
 use std::thread;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 const N: usize = 1_000_000_000;
 
@@ -58,6 +58,7 @@ fn push<T>(tx: &mut ringbuf::HeapProducer<T>, mut value: T) {
             Ok(_) => break,
             Err(v) => value = v,
         }
+        thread::sleep(Duration::from_millis(1));
     }
 }
 
@@ -66,5 +67,6 @@ fn pop<T>(rx: &mut ringbuf::HeapConsumer<T>) -> T {
         if let Some(value) = rx.pop() {
             return value;
         }
+        thread::sleep(Duration::from_millis(1));
     }
 }
