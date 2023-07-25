@@ -7,4 +7,5 @@ edition = "2021"
 
 [dependencies]
 blake3 = "1.4.1"
+crossbeam-channel = "0.5.8"
 sha2 = "0.10.7"

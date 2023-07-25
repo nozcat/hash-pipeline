@@ -1,5 +1,4 @@
 use sha2::{Digest, Sha512};
-use std::sync::mpsc;
 use std::thread;
 use std::time::Instant;
 
@@ -8,10 +7,10 @@ const N: usize = 1_000_000_000;
 fn main() {
     let start = Instant::now();
 
-    let (generator_to_sha512_tx, generator_to_sha512_rx) = mpsc::sync_channel(1_000_000);
-    let (generator_to_blake3_tx, generator_to_blake3_rx) = mpsc::sync_channel(1_000_000);
-    let (sha512_to_result_tx, sha512_to_result_rx) = mpsc::sync_channel(1_000_000);
-    let (blake3_to_result_tx, blake3_to_result_rx) = mpsc::sync_channel(1_000_000);
+    let (generator_to_sha512_tx, generator_to_sha512_rx) = crossbeam_channel::bounded(1_000_000);
+    let (generator_to_blake3_tx, generator_to_blake3_rx) = crossbeam_channel::bounded(1_000_000);
+    let (sha512_to_result_tx, sha512_to_result_rx) = crossbeam_channel::bounded(1_000_000);
+    let (blake3_to_result_tx, blake3_to_result_rx) = crossbeam_channel::bounded(1_000_000);
 
     // Generator
     thread::spawn(move || {
